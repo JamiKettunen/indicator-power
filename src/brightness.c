@@ -20,6 +20,7 @@
 #include "brightness.h"
 #include "dbus-powerd.h"
 
+#include <stdio.h>
 #include <gio/gio.h>
 
 #define SCHEMA_NAME "com.ubuntu.touch.system"
@@ -89,10 +90,15 @@ my_get_property(GObject     * o,
         break;
 
       case PROP_AUTO:
+        if (p->settings != NULL)
+          printf("my_get_property(): getting KEY_AUTO = %d\n", g_settings_get_boolean(p->settings, KEY_AUTO));
+        else
+          printf("my_get_property(): p->settings is null :/\n");
         g_value_set_boolean(value, p->settings ? g_settings_get_boolean(p->settings, KEY_AUTO) : FALSE);
         break;
 
       case PROP_AUTO_SUPPORTED:
+        printf("my_get_property(): powerd_ab_supported = %d\n", p->powerd_ab_supported);
         g_value_set_boolean(value, p->powerd_ab_supported);
         break;
 
@@ -118,7 +124,12 @@ my_set_property(GObject       * o,
 
       case PROP_AUTO:
         if (p->settings != NULL)
+        {
+          printf("my_set_property(): setting KEY_AUTO = %d\n", g_value_get_boolean(value));
           g_settings_set_boolean (p->settings, KEY_AUTO, g_value_get_boolean(value));
+        }
+        else
+          printf("my_set_property(): p->settings is null :/\n");
         break;
 
       default:
@@ -237,7 +248,10 @@ on_powerd_brightness_params_ready(GObject      * oproxy,
               (int)p->powerd_ab_supported);
  
       if (old_ab_supported != p->powerd_ab_supported)
+      {
+        printf("on_powerd_brightness_params_ready(): old_ab_supported = %d, powerd_ab_supported = %d\n", old_ab_supported, p->powerd_ab_supported);
         g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_AUTO_SUPPORTED]);
+      }
 
       if (p->settings != NULL)
         { 
@@ -424,6 +438,7 @@ set_brightness_global(IndicatorPowerBrightness * self, int brightness)
 static void
 on_auto_changed_in_schema(IndicatorPowerBrightness * self)
 {
+  printf("on_auto_changed_in_schema()\n");
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_AUTO]);
 }
 
